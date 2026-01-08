@@ -1,1 +1,21 @@
-This is my very first game in JavaScript. This game at its current stage contains 1 enemy (normal) and 1 tower (stacker), but might get a new tower very soon. Each tower/enemy has their own special ability. Further description will be added during development of the game. Thank you for your understanding and patiance.
+# Tower Defense Game
+
+A simple JavaScript tower defense game with 3 enemy types and 2 tower types. More content coming soon.
+
+## How to Play
+
+Select towers from the 6-slot panel on the right and press play.
+
+## Requirements
+
+- PHP 8.4.6
+
+## Local Development
+
+```bash
+php -S localhost:9000
+```
+
+## Support
+
+[![Patreon](https://c5.patreon.com/external/favicon/rebrand/pwa-192.png)](https://patreon.com/RUN1_IT) [Support Me!](https://patreon.com/RUN1_IT)

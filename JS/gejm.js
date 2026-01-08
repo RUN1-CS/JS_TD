@@ -1,121 +1,148 @@
-//importing enemy and tower types with their functions and data
-import { stacker, moveStacker, drawStacker, drawStackerBullet, traceStackerBullet/*, setStackerPos, stackerBullet, stackerAngle, shootStacker*/ } from './towers/stacker.js';
-import { sniper, moveSniper, drawSniper, drawSniperBullet, traceSniperBullet/*, setSniperPos, sniperBullet, sniperAngle, shootSniper*/ } from './towers/sniper.js';
+export let round = 0;
 
-import { normal, moveNormal/*, pos, currentPos, maxHP*/ } from './enemies/normal.js';
+import { mapping } from "/maps/mapping.js";
 
+export let towers = [];
+export let enemies = [];
+export let map = new mapping();
 
-import { setTower } from '../maps/map1.js';
+import { Normal } from "/JS/enemies/normal.js";
+import { Fast } from "/JS/enemies/sprinter.js";
+import { Heavy } from "/JS/enemies/tank.js";
 
-//exporting rounds for future boss rounds or other purposes
-export let rounds = 0;
-
-//adding rounds function
-export function addRounds() { rounds++; }
-
-//canvas and ctx setup
-let canvas = document.getElementById('canvas');
-let ctx = canvas.getContext('2d');
-
-//drawing canvas, enemies and towers
-function draw(ctx) {
-    ctx.clearRect(0, 0, 1920, 1080);
-    drawStacker(ctx);
-    drawStackerBullet(ctx);
-    drawSniper(ctx);
-    drawSniperBullet(ctx);
-    if (normal.alive === true) {
-        ctx.fillStyle = 'red';
-        ctx.fillRect(normal.x, normal.y, 50, 50);
-    }
+let playerHealth = 100;
+const healthDisplay = document.getElementById("health");
+healthDisplay.innerText = `Health: ${playerHealth}`;
+export function damagePlayer(amount) {
+  playerHealth -= amount;
+  healthDisplay.innerText = `Health: ${playerHealth}`;
+  if (playerHealth <= 0) {
+  }
 }
 
-//calculating closest enemy for targeting
-function calcClosestEnemy(tower, enemies) {
-    let closestEnemy = null;
-    let minDistance = Infinity;
+let stop = false;
+let frame = 0;
 
-    enemies.forEach(enemy => {
-        if (enemy.alive) {
-            const dx = enemy.x - tower.x;
-            const dy = enemy.y - tower.y;
-            const distance = Math.sqrt(dx * dx + dy * dy);
-            if (distance < minDistance) {
-                minDistance = distance;
-                closestEnemy = enemy;
-            }
-        }
-    });
+export const bg = document.getElementById("bg");
+export const mg = document.getElementById("mg");
+export const fg = document.getElementById("fg");
+export const bgx = bg.getContext("2d");
+export const mgx = mg.getContext("2d");
+export const fgx = fg.getContext("2d");
 
-    return closestEnemy;
+window.setRound = function (value) {
+  round = value;
+  return "Round set to " + round;
+};
+
+const framer = document.getElementById("frame");
+const rounder = document.getElementById("round");
+const stater = document.getElementById("status");
+
+const start = document.getElementById("start");
+start.addEventListener("click", () => {
+  start.style.display = "none";
+  map = new mapping();
+  for (let path of map.enemyPath) {
+    bgx.fillStyle = "brown";
+    bgx.fillRect(path.x * 50, path.y * 50, 50, 50);
+  }
+  gameLoop();
+});
+
+const worker = new Worker("/maps/spawning.js", { type: "module" });
+let spawning = false;
+worker.onmessage = function (e) {
+  switch (e.data) {
+    case "spawning":
+      spawning = true;
+      stater.innerText = "Spawning...";
+      break;
+    case "done":
+      spawning = false;
+      stater.innerText = "Waiting...";
+      break;
+    default:
+      if (e.data.push) {
+        eval(e.data.push);
+      }
+      break;
+  }
+};
+
+export async function addRounds() {
+  await asyncMessage({ waves: map.waves });
+  map.generateWave();
+  round++;
 }
 
-//main update function
 function update() {
-    traceStackerBullet(normal);
-    traceSniperBullet(normal);
-    moveNormal();
-
-    const stackerTarget = calcClosestEnemy(stacker, [normal]);
-    if (stackerTarget) {
-        moveStacker(stackerTarget);
+  for (let tower of towers) {
+    tower.update();
+  }
+  if (enemies.length === 0) {
+    if (!spawning) {
+      addRounds();
     }
-
-    const sniperTarget = calcClosestEnemy(sniper, [normal]);
-    if (sniperTarget) {
-        moveSniper(sniperTarget);
+  }
+  for (let enemy of enemies) {
+    if (!enemy.alive) {
+      enemy.clear();
+      enemies.splice(enemies.indexOf(enemy), 1);
     }
-    logz();
+    enemy.update();
+  }
 }
 
-//logging
-function logz() {
-    document.getElementById('hp').innerText = normal.hp;
-    document.getElementById('rounds').innerText = rounds;
+function asyncMessage(msg) {
+  if (stop) return;
+  return new Promise((resolve) => {
+    const handler = (e) => {
+      resolve(e.data);
+      worker.removeEventListener("message", handler);
+    };
+
+    worker.addEventListener("message", handler);
+    worker.postMessage(msg);
+  });
 }
 
-//game loop
 function gameLoop() {
-    update();
-    draw(ctx);
-    requestAnimationFrame(gameLoop);
+  update();
+  frame++;
+  framer.innerText = `Frame: ${frame}`;
+  rounder.innerText = `Round: ${round}`;
+  if (stop) return;
+  requestAnimationFrame(gameLoop);
 }
 
-const one = document.getElementById("slot1");
-const two = document.getElementById("slot2");
-const three = document.getElementById("slot3");
-const four = document.getElementById("slot4");
-const five = document.getElementById("slot5");
-const six = document.getElementById("slot6");
-
-one.addEventListener("change", (event) => {
-    let value = event.target.value;
-    setTower(1, value);
-});
-two.addEventListener("change", (event) => {
-    let value = event.target.value;
-    setTower(2, value);
-});
-three.addEventListener("change", (event) => {
-    let value = event.target.value;
-    setTower(3, value);
-});
-four.addEventListener("change", (event) => {
-    let value = event.target.value;
-    setTower(4, value);
-});
-five.addEventListener("change", (event) => {
-    let value = event.target.value;
-    setTower(5, value);
-});
-six.addEventListener("change", (event) => {
-    let value = event.target.value;
-    setTower(6, value);
-});
+for (let i = 0; i <= 5; i++) {
+  const slot = document.getElementById(`slot-${i}`);
+  slot.addEventListener("click", () => {
+    const selectedTower = slot.value;
+    map.setTower(i, selectedTower);
+  });
+}
 
 export function revertChoice(element, previousValue) {
-    element.value = previousValue;
+  element.value = previousValue;
 }
 
-//starting your eternal battle (totally not a DOOM reference)
-gameLoop();
+window.getData = function () {
+  return { towers: towers, enemies: enemies, map: map };
+};
+
+worker.onerror = function (e) {
+  console.error("Worker error: ", e.message);
+};
+console.log("Main thread initialized");
+
+window.getStatus = function () {
+  return spawning;
+};
+window.getMap = function () {
+  return map;
+};
+window.stopSpawning = function () {
+  stop = false;
+};
