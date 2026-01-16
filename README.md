@@ -13,6 +13,7 @@ Select towers from the 6-slot panel on the right and press play.
 ## Local Development
 
 ```bash
+tsc
 php -S localhost:9000
 ```
 
