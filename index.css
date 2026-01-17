@@ -1,0 +1,26 @@
+canvas {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+#bg {
+  z-index: 0;
+}
+#mg {
+  z-index: 1;
+}
+#fg {
+  z-index: 2;
+}
+aside {
+  position: absolute;
+  right: 1em;
+  top: 1em;
+  z-index: 3;
+  background-color: rgba(255, 255, 255, 0.8);
+  padding: 10px;
+  border-radius: 5px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
